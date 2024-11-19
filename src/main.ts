@@ -19,8 +19,12 @@ async function createToken({ roomName, participantName }: TokenRequest) {
   });
   // Token permissions can be added here based on the
   // desired capabilities of the participant
-  at.addGrant({ roomJoin: true, room: roomName });
-  return await at.toJwt();
+  at.addGrant({
+    roomJoin: true,
+    room: roomName,
+    canUpdateOwnMetadata: true,
+  });
+  return at.toJwt();
 }
 
 const app = express();

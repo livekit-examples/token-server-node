@@ -37,8 +37,12 @@ async function createToken({ roomName, participantName }) {
     identity: participantName,
     ttl: '10m',
   });
-  at.addGrant({ roomJoin: true, room: roomName });
-  return await at.toJwt();
+  at.addGrant({
+    roomJoin: true,
+    room: roomName,
+    canUpdateOwnMetadata: true,
+  });
+  return at.toJwt();
 }
 
 const app = express();
