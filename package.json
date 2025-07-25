@@ -11,7 +11,7 @@
     "format": "prettier --write \"**/*.ts\""
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
+    "dotenv": "^17.0.0",
     "express": "^4.21.1",
     "livekit-server-sdk": "^2.8.1"
   },
