@@ -5,15 +5,16 @@ import express from 'express';
 import { AccessToken } from 'livekit-server-sdk';
 
 type TokenRequest = {
-  roomName?: string;
-  participantName?: string;
-
   room_name?: string;
   participant_name?: string;
   participant_identity?: string;
   participant_metadata?: string;
   participant_attributes?: Record<string, string>;
   room_config?: ReturnType<RoomConfiguration['toJson']>;
+
+  // (old fields, here for backwards compatibility)
+  roomName?: string;
+  participantName?: string;
 };
 
 // Load environment variables from .env.local file
