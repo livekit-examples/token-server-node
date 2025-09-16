@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import express from 'express';
+import bodyParser from 'body-parser';
 import { AccessToken } from 'livekit-server-sdk';
 
 type TokenRequest = {
@@ -28,6 +29,7 @@ async function createToken({ roomName, participantName }: TokenRequest) {
 }
 
 const app = express();
+app.use(bodyParser.json());
 const port = 3000;
 
 app.post('/createToken', async (req, res) => {
