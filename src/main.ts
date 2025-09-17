@@ -61,8 +61,8 @@ const port = 3000;
 
 app.post('/createToken', async (req, res) => {
   const body = req.body ?? {};
-  body.roomName = body.roomName ?? 'demo-room';
-  body.participantName = body.participantName ?? 'demo-user';
+  body.roomName = body.roomName ?? `room-${crypto.randomUUID()}`;
+  body.participantName = body.participantName ?? `user-${crypto.randomUUID()}`;
 
   try {
     res.send({
