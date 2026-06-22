@@ -1,0 +1,70 @@
+name: "LiveKit Token Server"
+description: "Run this token server in CI and expose its /createToken endpoint for end-to-end tests."
+author: "LiveKit"
+
+branding:
+  icon: "key"
+  color: "orange"
+
+inputs:
+  livekit-url:
+    description: "LiveKit server URL the minted tokens should target (e.g. ws://localhost:7880)."
+    required: true
+  api-key:
+    description: "LiveKit API key used to sign tokens."
+    required: true
+  api-secret:
+    description: "LiveKit API secret used to sign tokens."
+    required: true
+  port:
+    description: "Port the token server listens on."
+    required: false
+    default: "3000"
+
+outputs:
+  token-url:
+    description: "URL of the token server's /createToken endpoint."
+    value: ${{ steps.start.outputs.token-url }}
+  log-path:
+    description: "Path to the token server's captured stdout/stderr log."
+    value: ${{ steps.start.outputs.log-path }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: start
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        LIVEKIT_URL: ${{ inputs.livekit-url }}
+        LIVEKIT_API_KEY: ${{ inputs.api-key }}
+        LIVEKIT_API_SECRET: ${{ inputs.api-secret }}
+        PORT: ${{ inputs.port }}
+      run: |
+        set -euo pipefail
+        echo "::add-mask::${LIVEKIT_API_SECRET}"
+
+        logpath="${RUNNER_TEMP:-/tmp}/token-server-node.log"
+        echo "log-path=${logpath}" >> "$GITHUB_OUTPUT"
+
+        npm install --global pnpm@9.15.9
+        pnpm install --frozen-lockfile
+        pnpm build
+
+        # Inherits LIVEKIT_URL / LIVEKIT_API_KEY / LIVEKIT_API_SECRET / PORT from
+        # the step env. Backgrounded so it stays up for subsequent workflow steps.
+        node dist/main.js > "$logpath" 2>&1 &
+
+        url="http://127.0.0.1:${PORT}/createToken"
+        for _ in $(seq 1 30); do
+          if curl -sf -X POST "$url" \
+            -H 'Content-Type: application/json' -d '{}' >/dev/null; then
+            echo "token-url=${url}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          sleep 1
+        done
+
+        echo "token server did not become ready on ${url}" >&2
+        cat "$logpath" >&2 || true
+        exit 1
