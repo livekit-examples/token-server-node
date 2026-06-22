@@ -30,7 +30,6 @@ Set up the environment by copying `.env.example` to `.env.local` and filling in 
 - `LIVEKIT_URL`
 - `LIVEKIT_API_KEY`
 - `LIVEKIT_API_SECRET`
-- `TOKEN_SERVER_PORT` (optional; defaults to `3000`)
 
 You can also do this automatically using the LiveKit CLI:
 
@@ -38,13 +37,13 @@ You can also do this automatically using the LiveKit CLI:
 lk app env
 ```
 
+The server listens on port `3000` by default. To override, set environment variable `TOKEN_SERVER_PORT` to desired port.
+
 Build and run the server:
 
 ```console
 pnpm build && pnpm start
 ```
-
-The server listens on port `3000` by default; set `TOKEN_SERVER_PORT` to override.
 
 ## Use as a GitHub Action
 
@@ -52,7 +51,7 @@ This repository doubles as a composite GitHub Action, so CI for other projects
 can stand up a real token endpoint (for example, to exercise an SDK's HTTP token
 source end-to-end against a local `livekit-server`).
 
-Optionally set `TOKEN_SERVER_PORT` on the workflow (defaults to `3000`):
+Below is an example usage of this action:
 
 ```yaml
 env:
@@ -60,12 +59,14 @@ env:
 
 - name: Start token server
   id: token_server
-  uses: livekit-examples/token-server-node@v1
+  uses: livekit-examples/token-server-node@v1 #v1 is an example release version
   with:
     livekit-url: ws://localhost:7880
     api-key: devkey
     api-secret: secret
 
+# Here code under test would be run, such as integration tests. 
+# The below is a simple curl command to show the server working
 - name: Use the endpoint
   run: curl -sf -X POST "${{ steps.token_server.outputs.token-url }}" \
     -H 'Content-Type: application/json' \
@@ -74,8 +75,5 @@ env:
 
 Outputs:
 
-- `token-url` — full URL of the `/createToken` endpoint.
-- `log-path` — path to the server's captured stdout/stderr log.
-
-Pin to a released tag or commit SHA (as shown for `@v1`) rather than a moving
-branch.
+- `token-url` — full URL of the `/createToken` endpoint
+- `log-path` — path to the server's captured stdout/stderr log
