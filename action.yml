@@ -39,7 +39,7 @@ runs:
         set -euo pipefail
         echo "::add-mask::${LIVEKIT_API_SECRET}"
 
-        : "${TOKEN_SERVER_PORT:?TOKEN_SERVER_PORT must be set by the caller (e.g. workflow env)}"
+        TOKEN_SERVER_PORT="${TOKEN_SERVER_PORT:-3000}"
 
         logpath="${RUNNER_TEMP:-/tmp}/token-server-node.log"
         echo "log-path=${logpath}" >> "$GITHUB_OUTPUT"

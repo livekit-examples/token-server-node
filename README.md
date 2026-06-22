@@ -30,7 +30,7 @@ Set up the environment by copying `.env.example` to `.env.local` and filling in 
 - `LIVEKIT_URL`
 - `LIVEKIT_API_KEY`
 - `LIVEKIT_API_SECRET`
-- `TOKEN_SERVER_PORT` (TCP port the server listens on; e.g. `3000`)
+- `TOKEN_SERVER_PORT` (optional; defaults to `3000`)
 
 You can also do this automatically using the LiveKit CLI:
 
@@ -44,7 +44,7 @@ Build and run the server:
 pnpm build && pnpm start
 ```
 
-The server requires `TOKEN_SERVER_PORT`; it does not pick a port on its own.
+The server listens on port `3000` by default; set `TOKEN_SERVER_PORT` to override.
 
 ## Use as a GitHub Action
 
@@ -52,12 +52,11 @@ This repository doubles as a composite GitHub Action, so CI for other projects
 can stand up a real token endpoint (for example, to exercise an SDK's HTTP token
 source end-to-end against a local `livekit-server`).
 
-Set `TOKEN_SERVER_PORT` on the workflow (or on the action step) so the server
-and health check agree on the listen port:
+Optionally set `TOKEN_SERVER_PORT` on the workflow (defaults to `3000`):
 
 ```yaml
 env:
-  TOKEN_SERVER_PORT: "3000"
+  TOKEN_SERVER_PORT: "3000"  # optional
 
 - name: Start token server
   id: token_server
