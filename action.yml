@@ -16,10 +16,6 @@ inputs:
   api-secret:
     description: "LiveKit API secret used to sign tokens."
     required: true
-  port:
-    description: "Port the token server listens on."
-    required: false
-    default: "3000"
 
 outputs:
   token-url:
@@ -39,10 +35,11 @@ runs:
         LIVEKIT_URL: ${{ inputs.livekit-url }}
         LIVEKIT_API_KEY: ${{ inputs.api-key }}
         LIVEKIT_API_SECRET: ${{ inputs.api-secret }}
-        PORT: ${{ inputs.port }}
       run: |
         set -euo pipefail
         echo "::add-mask::${LIVEKIT_API_SECRET}"
+
+        : "${TOKEN_SERVER_PORT:?TOKEN_SERVER_PORT must be set by the caller (e.g. workflow env)}"
 
         logpath="${RUNNER_TEMP:-/tmp}/token-server-node.log"
         echo "log-path=${logpath}" >> "$GITHUB_OUTPUT"
@@ -51,11 +48,12 @@ runs:
         pnpm install --frozen-lockfile
         pnpm build
 
-        # Inherits LIVEKIT_URL / LIVEKIT_API_KEY / LIVEKIT_API_SECRET / PORT from
-        # the step env. Backgrounded so it stays up for subsequent workflow steps.
+        # Inherits LIVEKIT_URL / LIVEKIT_API_KEY / LIVEKIT_API_SECRET / TOKEN_SERVER_PORT
+        # from the calling workflow step env. Backgrounded so it stays up for subsequent
+        # workflow steps.
         node dist/main.js > "$logpath" 2>&1 &
 
-        url="http://127.0.0.1:${PORT}/createToken"
+        url="http://127.0.0.1:${TOKEN_SERVER_PORT}/createToken"
         for _ in $(seq 1 30); do
           if curl -sf -X POST "$url" \
             -H 'Content-Type: application/json' -d '{}' >/dev/null; then

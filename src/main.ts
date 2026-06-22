@@ -57,7 +57,14 @@ async function createToken(request: TokenRequest) {
 
 const app = express();
 app.use(bodyParser.json());
-const port = Number(process.env.PORT ?? 3000);
+const portEnv = process.env.TOKEN_SERVER_PORT;
+if (portEnv === undefined || portEnv === '') {
+  throw new Error('TOKEN_SERVER_PORT environment variable is required');
+}
+const port = Number(portEnv);
+if (!Number.isFinite(port) || port <= 0) {
+  throw new Error(`TOKEN_SERVER_PORT must be a positive integer, got: ${portEnv}`);
+}
 
 app.post('/createToken', async (req, res) => {
   const body = req.body ?? {};
