@@ -37,7 +37,7 @@ You can also do this automatically using the LiveKit CLI:
 lk app env
 ```
 
-The server listens on port `3000` by default. To override, set environment variable `TOKEN_SERVER_PORT` to desired port.
+The server listens on port `3000` by default. To override, set the `PORT` environment variable.
 
 Build and run the server:
 
@@ -54,9 +54,6 @@ source end-to-end against a local `livekit-server`).
 Below is an example usage of this action:
 
 ```yaml
-env:
-  TOKEN_SERVER_PORT: "3000"  # optional
-
 - name: Start token server
   id: token_server
   uses: livekit-examples/token-server-node@v1 #v1 is an example release version
@@ -64,6 +61,7 @@ env:
     livekit-url: ws://localhost:7880
     api-key: devkey
     api-secret: secret
+    port: "3000"  # optional; defaults to 3000
 
 # Here code under test would be run, such as integration tests. 
 # The below is a simple curl command to show the server working
