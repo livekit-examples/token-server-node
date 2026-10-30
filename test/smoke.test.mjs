@@ -40,33 +40,51 @@ async function createToken(body) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  assert.equal(res.status, 200);
+  assert.equal(res.status, 201);
   return res.json();
 }
 
-test('returns a valid token for the requested room and participant', async () => {
+function verify(token) {
+  return new TokenVerifier(LIVEKIT_API_KEY, LIVEKIT_API_SECRET).verify(token);
+}
+
+test('encodes every request field into the token', async () => {
   const { server_url, participant_token } = await createToken({
     room_name: 'smoke-room',
     participant_identity: 'smoke-identity',
     participant_name: 'Smoke Tester',
+    participant_metadata: '{"role":"tester"}',
+    participant_attributes: { team: 'qa' },
+    room_config: { agents: [{ agent_name: 'smoke-agent' }] },
   });
 
   assert.equal(server_url, LIVEKIT_URL);
 
-  const claims = await new TokenVerifier(LIVEKIT_API_KEY, LIVEKIT_API_SECRET).verify(
-    participant_token,
-  );
+  const claims = await verify(participant_token);
   assert.equal(claims.sub, 'smoke-identity');
+  assert.equal(claims.name, 'Smoke Tester');
+  assert.equal(claims.metadata, '{"role":"tester"}');
+  assert.deepEqual(claims.attributes, { team: 'qa' });
+  assert.equal(claims.roomConfig?.agents?.[0]?.agentName, 'smoke-agent');
   assert.equal(claims.video?.room, 'smoke-room');
   assert.equal(claims.video?.roomJoin, true);
 });
 
-test('generates a room and participant when none are given', async () => {
+test('generates a room and identity when none are given', async () => {
   const { participant_token } = await createToken({});
 
-  const claims = await new TokenVerifier(LIVEKIT_API_KEY, LIVEKIT_API_SECRET).verify(
-    participant_token,
-  );
+  const claims = await verify(participant_token);
   assert.match(claims.video?.room ?? '', /^room-/);
   assert.match(claims.sub ?? '', /^user-/);
+});
+
+test('still accepts the legacy camelCase fields', async () => {
+  const { participant_token } = await createToken({
+    roomName: 'legacy-room',
+    participantName: 'legacy-user',
+  });
+
+  const claims = await verify(participant_token);
+  assert.equal(claims.video?.room, 'legacy-room');
+  assert.equal(claims.sub, 'legacy-user');
 });

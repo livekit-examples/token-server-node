@@ -22,11 +22,13 @@ dotenv.config({ path: '.env.local' });
 
 // This route handler creates a token for a given room and participant
 async function createToken(request: TokenRequest) {
-  const roomName = request.room_name ?? request.roomName!;
-  const participantName = request.participant_name ?? request.participantName!;
+  const roomName = request.room_name ?? request.roomName ?? `room-${crypto.randomUUID()}`;
+  // The legacy `participantName` field was used as the identity, so keep it as a fallback
+  const identity =
+    request.participant_identity ?? request.participantName ?? `user-${crypto.randomUUID()}`;
 
   const at = new AccessToken(process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET, {
-    identity: participantName,
+    identity,
     // Token to expire after 10 minutes
     ttl: '10m',
   });
@@ -39,8 +41,8 @@ async function createToken(request: TokenRequest) {
     canUpdateOwnMetadata: true,
   });
 
-  if (request.participant_identity) {
-    at.identity = request.participant_identity;
+  if (request.participant_name) {
+    at.name = request.participant_name;
   }
   if (request.participant_metadata) {
     at.metadata = request.participant_metadata;
@@ -60,12 +62,10 @@ app.use(bodyParser.json());
 const port = 3000;
 
 app.post('/createToken', async (req, res) => {
-  const body = req.body ?? {};
-  body.roomName = body.roomName ?? `room-${crypto.randomUUID()}`;
-  body.participantName = body.participantName ?? `user-${crypto.randomUUID()}`;
+  const body: TokenRequest = req.body ?? {};
 
   try {
-    res.send({
+    res.status(201).send({
       server_url: process.env.LIVEKIT_URL,
       participant_token: await createToken(body),
     });
